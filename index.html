@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Intenção de Férias</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--text:#172033;--muted:#667085;--primary:#173f73;--primary2:#2563a8;--border:#dbe3ef;--green:#18794e;--yellow:#a15c00;--red:#b42318;--blue:#175cd3;--purple:#6941c6;--shadow:0 8px 24px rgba(30,64,110,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,#12365f,#24649c);color:white;padding:26px 32px;box-shadow:var(--shadow)}
+header h1{margin:0;font-size:26px}header p{margin:7px 0 0;opacity:.86}
+.container{max-width:1500px;margin:22px auto;padding:0 22px 40px}.toolbar,.panel,.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.toolbar{padding:18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}.upload{display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:#fff;padding:11px 15px;border-radius:9px;cursor:pointer;font-weight:700}.upload input{display:none}
+button,select,input{font:inherit}button{border:0;border-radius:9px;padding:10px 13px;font-weight:650;cursor:pointer;background:#eaf0f8;color:#173f73}button.primary{background:var(--primary);color:white}button:disabled{opacity:.45;cursor:not-allowed}
+.file-name{color:var(--muted);font-size:14px}.notice{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eef5ff;border:1px solid #cfe0f6;color:#244a73}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;margin:18px 0}.kpi{padding:16px}.kpi span{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em}.kpi strong{display:block;font-size:26px;margin-top:7px}.kpi small{color:var(--muted)}
+.filters{display:grid;grid-template-columns:2fr repeat(4,1fr);gap:10px;padding:15px}.filters input,.filters select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;background:white;color:var(--text)}
+.panel{margin-top:16px;overflow:hidden}.panel-title{padding:15px 18px;border-bottom:1px solid var(--border);font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}.table-wrap{overflow:auto;max-height:650px}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:1450px}th{position:sticky;top:0;background:#edf3fa;color:#29435f;z-index:2;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:11px;border-bottom:1px solid var(--border)}td{padding:10px 11px;border-bottom:1px solid #edf0f5;vertical-align:top;font-size:13px}tr:hover td{background:#f8fbff}.name{font-weight:800}.muted{color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;white-space:nowrap}.ok{background:#e8f7ef;color:var(--green)}.warn{background:#fff3d8;color:var(--yellow)}.error{background:#feeceb;color:var(--red)}.info{background:#eaf2ff;color:var(--blue)}.purple{background:#f1ebff;color:var(--purple)}
+.status-select{border:1px solid var(--border);border-radius:7px;padding:7px;background:#fff}.notes{width:180px;min-height:55px;resize:vertical;border:1px solid var(--border);border-radius:7px;padding:7px}
+.month-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;padding:16px}.month-card{border:1px solid var(--border);border-radius:10px;padding:12px}.month-card h3{margin:0 0 8px;font-size:15px}.person-chip{display:block;padding:6px 8px;margin:5px 0;border-left:4px solid var(--primary2);background:#f5f8fc;border-radius:5px;font-size:12px}.conflict{border-left-color:var(--red);background:#fff4f3}.near-row td{background:#fff8e8!important}.completed-row td{background:#f4f6f8!important;color:#5f6b7a}.section-note{padding:10px 18px;background:#fff8e8;border-bottom:1px solid #f3d9a0;color:#7a4b00;font-size:13px}
+.empty{text-align:center;padding:48px;color:var(--muted)}.hidden{display:none!important}.validation-list{padding:12px 18px}.validation-item{padding:10px 0;border-bottom:1px solid #edf0f5}.validation-item:last-child{border-bottom:0}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}}@media(max-width:600px){header{padding:20px}.container{padding:0 10px}.kpis{grid-template-columns:1fr 1fr}.toolbar>*{width:100%}.filters{grid-template-columns:1fr}}
+@media print{header,.toolbar,.filters,.no-print{display:none!important}.container{max-width:none;margin:0;padding:0}.panel{box-shadow:none;border:0}.table-wrap{max-height:none;overflow:visible}table{min-width:0;font-size:10px}th{position:static}}
+</style>
+</head>
+<body>
+<header><h1>Gestão de Intenção de Férias</h1><p>A planilha padrão é carregada automaticamente. Você também pode selecionar outro arquivo manualmente.</p></header>
+<div class="container">
+  <div class="toolbar">
+    <label class="upload">📂 Carregar planilha (.xlsx)<input id="fileInput" type="file" accept=".xlsx,.xls"></label>
+    <span id="fileName" class="file-name">Procurando planilha padrão...</span>
+    <button id="exportBtn" disabled>⬇ Exportar tratamento CSV</button>
+    <button id="printBtn" disabled>🖨 Imprimir / PDF</button>
+    <button id="clearBtn" disabled>🧹 Limpar dados</button>
+  </div>
+  <div class="notice">Ao abrir o sistema, ele procura automaticamente o arquivo <strong>Formulário de Intenção de Férias.xlsx</strong> na mesma pasta do site. As decisões de aprovação e observações ficam salvas neste navegador.</div>
+  <section id="content" class="hidden">
+    <div class="kpis">
+      <div class="kpi"><span>Colaboradores</span><strong id="kEmployees">0</strong><small>respostas únicas</small></div>
+      <div class="kpi"><span>Períodos</span><strong id="kPeriods">0</strong><small>faixas cadastradas</small></div>
+      <div class="kpi"><span>Dias informados</span><strong id="kDays">0</strong><small>contagem inclusiva</small></div>
+      <div class="kpi"><span>Venda de 10 dias</span><strong id="kSale">0</strong><small>solicitações</small></div>
+      <div class="kpi"><span>Adiantamento 13º</span><strong id="k13">0</strong><small>solicitações</small></div>
+      <div class="kpi"><span>Alertas</span><strong id="kAlerts">0</strong><small>dados a conferir</small></div>
+    </div>
+    <div class="panel filters no-print">
+      <input id="search" placeholder="Buscar por nome, setor, cargo, gestor ou e-mail">
+      <select id="sectorFilter"><option value="">Todos os setores</option></select>
+      <select id="yearFilter"><option value="">Todos os anos</option></select>
+      <select id="monthFilter"><option value="">Todos os meses</option></select>
+      <select id="statusFilter"><option value="">Todos os status</option><option>Pendente</option><option>Aprovado</option><option>Ajustar</option><option>Reprovado</option></select>
+    </div>
+    <div class="panel"><div class="panel-title">Visão mensal <span class="muted" id="monthSummary"></span></div><div id="monthGrid" class="month-grid"></div></div>
+    <div class="panel"><div class="panel-title">Períodos atuais e futuros <span class="muted" id="resultCount"></span></div><div class="section-note">⚠ Períodos que começam nos próximos 30 dias ficam destacados em amarelo.</div><div class="table-wrap"><table><thead><tr>
+      <th>Colaborador</th><th>Setor / Cargo</th><th>Gestor</th><th>Período</th><th>Início</th><th>Término</th><th>Dias</th><th>Venda 10 dias</th><th>13º</th><th>Conflitos</th><th>Validação</th><th>Status</th><th>Observações</th>
+    </tr></thead><tbody id="tbody"></tbody></table><div id="empty" class="empty">Carregue uma planilha para iniciar.</div></div></div>
+    <div class="panel"><div class="panel-title">Férias já concluídas <span class="muted" id="completedCount"></span></div><div class="table-wrap"><table><thead><tr>
+      <th>Colaborador</th><th>Setor / Cargo</th><th>Gestor</th><th>Período</th><th>Início</th><th>Término</th><th>Dias</th><th>Venda 10 dias</th><th>13º</th><th>Conflitos</th><th>Validação</th><th>Status</th><th>Observações</th>
+    </tr></thead><tbody id="completedBody"></tbody></table><div id="completedEmpty" class="empty">Nenhuma férias concluída no filtro atual.</div></div></div>
+    <div class="panel"><div class="panel-title">Alertas e inconsistências</div><div id="validationList" class="validation-list"></div></div>
+  </section>
+</div>
+<script>
+const $=id=>document.getElementById(id); let rawRows=[], periods=[], filtered=[];
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function normalize(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ')}
+function clean(s){return String(s??'').trim().replace(/\s+/g,' ')}
+function keyFind(obj, words){let keys=Object.keys(obj);return keys.find(k=>words.every(w=>normalize(k).includes(w))) }
+function parseDate(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate());if(typeof v==='number'){let d=XLSX.SSF.parse_date_code(v);return d?new Date(d.y,d.m-1,d.d):null}let s=String(v).trim();let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1])}let d=new Date(s);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function fmt(d){return d?d.toLocaleDateString('pt-BR'):'—'}
+function iso(d){if(!d)return'';return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function daysInclusive(a,b){return a&&b?Math.round((b-a)/86400000)+1:0}
+function yes(v){return normalize(v)==='sim'}
+function today(){let d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function isCompleted(p){return !!(p.end&&p.end<today())}
+function daysUntilStart(p){return p.start?Math.ceil((p.start-today())/86400000):null}
+function isNear(p){let d=daysUntilStart(p);return d!==null&&d>=0&&d<=30}
+function storageKey(p){return 'ferias:'+normalize(p.name)+'|'+p.index+'|'+iso(p.start)+'|'+iso(p.end)}
+function loadDecision(p){try{return JSON.parse(localStorage.getItem(storageKey(p)))||{status:'Pendente',notes:''}}catch{return{status:'Pendente',notes:''}}}
+function saveDecision(p,status,notes){localStorage.setItem(storageKey(p),JSON.stringify({status,notes}))}
+function processRows(rows){rawRows=rows;periods=[];rows.forEach((r,ri)=>{
+ const get=(...words)=>{let k=keyFind(r,words);return k?r[k]:null};
+ const base={row:ri+2,name:clean(get('nome','completo')),id:clean(get('matricula'))||clean(get('id')),sector:clean(get('departamento'))||clean(get('setor')),role:clean(get('cargo')),email:clean(get('email')),manager:clean(get('gestor')),request:clean(get('tipo','solicitacao')),qtyText:clean(get('quantidade','dias')),sale:clean(get('vender','10')),advance13:clean(get('adiantar','13'))};
+ for(let i=1;i<=3;i++){let sk=keyFind(r,[`${i}º periodo`,'data de inicio'])||keyFind(r,[`${i}o periodo`,'data de inicio']);let ek=keyFind(r,[`${i}º periodo`,'data de termino'])||keyFind(r,[`${i}o periodo`,'data de termino']);let start=parseDate(sk?r[sk]:null),end=parseDate(ek?r[ek]:null);if(start||end){periods.push({...base,index:i,start,end,days:daysInclusive(start,end),issues:[],conflicts:[]})}}
+ if(!periods.some(p=>p.row===ri+2)) periods.push({...base,index:0,start:null,end:null,days:0,issues:['Nenhum período com data preenchida'],conflicts:[]});
+ });validate();populateFilters();applyFilters();}
+function validate(){periods.forEach(p=>{p.issues=p.issues||[];if(!p.name)p.issues.push('Nome não informado');if(!p.sector)p.issues.push('Setor não informado');if(!p.start)p.issues.push('Data inicial ausente');if(!p.end)p.issues.push('Data final ausente');if(p.start&&p.end&&p.end<p.start)p.issues.push('Término anterior ao início');if(p.days>30)p.issues.push('Período superior a 30 dias');if(p.days===1)p.issues.push('Período de apenas 1 dia — conferir');if(p.email&& !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email) && normalize(p.email)!=='nao tenho')p.issues.push('E-mail possivelmente inválido');});
+ for(let i=0;i<periods.length;i++)for(let j=i+1;j<periods.length;j++){let a=periods[i],b=periods[j];if(!a.start||!a.end||!b.start||!b.end||normalize(a.name)===normalize(b.name))continue;if(a.start<=b.end&&b.start<=a.end){if(normalize(a.sector)===normalize(b.sector)){a.conflicts.push(b.name);b.conflicts.push(a.name)}}}
+ const byPerson={};periods.forEach(p=>(byPerson[normalize(p.name)]??=[]).push(p));Object.values(byPerson).forEach(arr=>{let total=arr.reduce((s,p)=>s+p.days,0),sale=arr.some(p=>yes(p.sale));let expected=sale?20:30;if(total && total!==expected)arr.forEach(p=>p.issues.push(`Total pelas datas: ${total} dia(s); esperado em regra: ${expected}`));});}
+function populateFilters(){let sectors=[...new Set(periods.map(p=>p.sector).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));$('sectorFilter').innerHTML='<option value="">Todos os setores</option>'+sectors.map(x=>`<option>${esc(x)}</option>`).join('');let years=[...new Set(periods.flatMap(p=>[p.start?.getFullYear(),p.end?.getFullYear()]).filter(Boolean))].sort();$('yearFilter').innerHTML='<option value="">Todos os anos</option>'+years.map(x=>`<option>${x}</option>`).join('');$('monthFilter').innerHTML='<option value="">Todos os meses</option>'+MONTHS.map((x,i)=>`<option value="${i}">${x}</option>`).join('')}
+function applyFilters(){let q=normalize($('search').value),sec=$('sectorFilter').value,yr=$('yearFilter').value,mo=$('monthFilter').value,st=$('statusFilter').value;filtered=periods.filter(p=>{let dec=loadDecision(p),text=normalize([p.name,p.sector,p.role,p.manager,p.email].join(' '));return(!q||text.includes(q))&&(!sec||p.sector===sec)&&(!yr||p.start?.getFullYear()==yr||p.end?.getFullYear()==yr)&&(mo===''||p.start?.getMonth()==mo||p.end?.getMonth()==mo)&&(!st||dec.status===st)});render()}
+function render(){let people=new Set(filtered.map(p=>normalize(p.name))),alerts=filtered.filter(p=>p.issues.length||p.conflicts.length);$('kEmployees').textContent=people.size;$('kPeriods').textContent=filtered.filter(p=>p.index).length;$('kDays').textContent=filtered.reduce((s,p)=>s+p.days,0);$('kSale').textContent=new Set(filtered.filter(p=>yes(p.sale)).map(p=>normalize(p.name))).size;$('k13').textContent=new Set(filtered.filter(p=>yes(p.advance13)).map(p=>normalize(p.name))).size;$('kAlerts').textContent=alerts.length;renderTable();renderMonths();renderValidations()}
+function rowHtml(p,i,kind){let d=loadDecision(p),valid=p.issues.length?`<span class="badge error">${p.issues.length} alerta(s)</span>`:'<span class="badge ok">Regular</span>',conf=p.conflicts.length?`<span class="badge warn" title="${esc(p.conflicts.join(', '))}">${p.conflicts.length} sobreposição(ões)</span>`:'<span class="badge ok">Nenhuma</span>',near=isNear(p)?`<div><span class="badge warn">⚠ Começa em ${daysUntilStart(p)} dia(s)</span></div>`:'';return `<tr class="${kind==='completed'?'completed-row':isNear(p)?'near-row':''}"><td><div class="name">${esc(p.name||'Não informado')}</div><div class="muted">${esc(p.email||'')}</div><div class="muted">Matrícula: ${esc(p.id||'—')}</div>${near}</td><td>${esc(p.sector||'—')}<div class="muted">${esc(p.role||'—')}</div></td><td>${esc(p.manager||'—')}</td><td><span class="badge info">${p.index?p.index+'º período':'Sem período'}</span><div class="muted">${esc(p.request)}</div></td><td>${fmt(p.start)}</td><td>${fmt(p.end)}</td><td><strong>${p.days||'—'}</strong></td><td>${yes(p.sale)?'<span class="badge purple">Sim</span>':'Não'}</td><td>${yes(p.advance13)?'<span class="badge info">Sim</span>':'Não'}</td><td>${conf}</td><td>${valid}</td><td><select class="status-select" data-key="${esc(storageKey(p))}">${['Pendente','Aprovado','Ajustar','Reprovado'].map(x=>`<option ${d.status===x?'selected':''}>${x}</option>`).join('')}</select></td><td><textarea class="notes" data-key="${esc(storageKey(p))}" placeholder="Análise do RH/gestor">${esc(d.notes)}</textarea></td></tr>`}
+function renderTable(){let current=filtered.filter(p=>!isCompleted(p)),completed=filtered.filter(isCompleted);$('empty').classList.toggle('hidden',current.length>0);$('completedEmpty').classList.toggle('hidden',completed.length>0);$('tbody').innerHTML=current.map((p,i)=>rowHtml(p,i,'current')).join('');$('completedBody').innerHTML=completed.map((p,i)=>rowHtml(p,i,'completed')).join('');$('resultCount').textContent=`${current.length} registro(s)`;$('completedCount').textContent=`${completed.length} registro(s)`;document.querySelectorAll('.status-select,.notes').forEach(el=>el.addEventListener('change',saveRow));document.querySelectorAll('.notes').forEach(el=>el.addEventListener('blur',saveRow))}
+function saveRow(e){let key=e.target.dataset.key,p=periods.find(x=>storageKey(x)===key),row=e.target.closest('tr');if(p)saveDecision(p,row.querySelector('.status-select').value,row.querySelector('.notes').value)}
+function renderMonths(){let map={};filtered.filter(p=>p.start).forEach(p=>{let cursor=new Date(p.start),end=p.end||p.start;while(cursor<=end){let key=`${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}`;(map[key]??=[]).push(p);cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1)}});let keys=Object.keys(map).sort();$('monthSummary').textContent=`${keys.length} mês(es) com férias`;$('monthGrid').innerHTML=keys.length?keys.map(k=>{let [y,m]=k.split('-').map(Number),uniq=[...new Map(map[k].map(p=>[storageKey(p),p])).values()];return `<div class="month-card"><h3>${MONTHS[m-1]} de ${y} <span class="badge info">${uniq.length}</span></h3>${uniq.sort((a,b)=>a.start-b.start).map(p=>`<span class="person-chip ${p.conflicts.length?'conflict':''}"><strong>${esc(p.name)}</strong><br>${fmt(p.start)} a ${fmt(p.end)} · ${p.days} dias</span>`).join('')}</div>`}).join(''):'<div class="empty">Nenhum período no filtro atual.</div>'}
+function renderValidations(){let items=filtered.filter(p=>p.issues.length||p.conflicts.length);$('validationList').innerHTML=items.length?items.map(p=>`<div class="validation-item"><strong>${esc(p.name)} — ${p.index||'sem'}º período</strong><div>${[...p.issues,p.conflicts.length?`Sobreposição no setor com: ${p.conflicts.join(', ')}`:''].filter(Boolean).map(x=>`<span class="badge ${x.startsWith('Sobreposição')?'warn':'error'}">${esc(x)}</span>`).join(' ')}</div></div>`).join(''):'<div class="empty">Nenhuma inconsistência encontrada no filtro atual.</div>'}
+function exportCSV(){let head=['Nome','Matrícula','Setor','Cargo','Gestor','E-mail','Período','Início','Término','Dias','Venda 10 dias','Adiantamento 13º','Conflitos','Alertas','Status','Observações'];let lines=[head,...filtered.map(p=>{let d=loadDecision(p);return[p.name,p.id,p.sector,p.role,p.manager,p.email,p.index,fmt(p.start),fmt(p.end),p.days,p.sale,p.advance13,p.conflicts.join(' | '),p.issues.join(' | '),d.status,d.notes]})].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');let blob=new Blob(['\ufeff'+lines],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tratamento_ferias.csv';a.click();URL.revokeObjectURL(a.href)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function loadWorkbookData(arrayBuffer,fileLabel){
+ try{
+  let wb=XLSX.read(arrayBuffer,{type:'array',cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});
+  if(!rows.length)throw Error('A planilha não possui respostas.');
+  processRows(rows);$('fileName').textContent='✅ '+fileLabel;$('content').classList.remove('hidden');['exportBtn','printBtn','clearBtn'].forEach(id=>$(id).disabled=false);
+ }catch(err){throw err}
+}
+async function autoLoadDefaultFile(){
+ const defaultName='Formulário de Intenção de Férias.xlsx';
+ try{
+  const url='./'+encodeURIComponent(defaultName)+'?v='+Date.now();
+  const response=await fetch(url,{cache:'no-store'});
+  if(!response.ok)throw Error('arquivo não encontrado');
+  const data=await response.arrayBuffer();
+  loadWorkbookData(data,defaultName+' (carregada automaticamente)');
+ }catch(err){
+  $('fileName').textContent='Planilha padrão não encontrada. Selecione o arquivo manualmente.';
+ }
+}
+$('fileInput').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=ev=>{try{loadWorkbookData(ev.target.result,f.name)}catch(err){alert('Não foi possível ler o arquivo: '+err.message)}};reader.readAsArrayBuffer(f)});
+['search','sectorFilter','yearFilter','monthFilter','statusFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',applyFilters));$('exportBtn').onclick=exportCSV;$('printBtn').onclick=()=>window.print();$('clearBtn').onclick=()=>{rawRows=[];periods=[];filtered=[];$('fileInput').value='';$('fileName').textContent='Dados removidos da tela. Recarregue a página para abrir a planilha padrão.';$('content').classList.add('hidden');['exportBtn','printBtn','clearBtn'].forEach(id=>$(id).disabled=true)};
+autoLoadDefaultFile();
+</script>
+</body></html>
