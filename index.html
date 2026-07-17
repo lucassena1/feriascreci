@@ -298,6 +298,95 @@ button,input,select,textarea{font:inherit}
   .header,.filters,.tabs,.months,.actions,.drawer,.drawer-back{display:none!important}
   .container{max-width:none}.list{grid-template-columns:1fr 1fr}.person{break-inside:avoid}
 }
+
+.edit-section{
+  margin-top:16px;
+  border-top:1px solid var(--line);
+  padding-top:14px
+}
+.edit-section h4{
+  margin:0 0 10px;
+  font-size:13px;
+  color:var(--text)
+}
+.edit-period{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:8px;
+  background:#fafcff
+}
+.edit-period-title{
+  font-size:11px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:8px
+}
+.edit-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+.edit-field label{
+  margin:0 0 4px;
+  font-size:10px;
+  text-transform:uppercase
+}
+.edit-field input{
+  width:100%;
+  border:1px solid #d8deea;
+  border-radius:8px;
+  padding:8px
+}
+.check-row{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin:10px 0
+}
+.check-row label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  color:var(--text);
+  font-size:12px
+}
+.edit-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px
+}
+.btn.danger-soft{
+  background:#fff1f3;
+  color:#b4233d;
+  border:1px solid #ffd0d8
+}
+.history-box{
+  margin-top:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+  background:#fff
+}
+.history-box h5{
+  margin:0 0 8px;
+  font-size:11px;
+  color:var(--muted);
+  text-transform:uppercase
+}
+.history-item{
+  font-size:11px;
+  color:#556176;
+  padding:7px 0;
+  border-top:1px solid #eef1f5
+}
+.history-item:first-of-type{border-top:0}
+@media(max-width:560px){
+  .edit-row,.edit-actions{grid-template-columns:1fr}
+}
+
 </style>
 
 </head>
@@ -349,9 +438,90 @@ function inclusive(a,b){return a&&b?dayDiff(a,b)+1:0}
 function today(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
 function get(row,label){const key=Object.keys(row).find(k=>norm(k)===label);return row[key]}
 function decisionKey(person){return 'ferias:'+norm(person.name).toLowerCase()+'|'+norm(person.email).toLowerCase()+'|'+norm(person.sector).toLowerCase()}
-function loadDecision(p){try{return JSON.parse(localStorage.getItem(decisionKey(p)))||{status:'Pendente',note:''}}catch{return{status:'Pendente',note:''}}}
+function loadDecision(p){
+  try{
+    return JSON.parse(localStorage.getItem(decisionKey(p)))||{
+      status:'Pendente',
+      note:'',
+      edits:null,
+      history:[]
+    }
+  }catch{
+    return {status:'Pendente',note:'',edits:null,history:[]}
+  }
+}}
 function classify(p){const t=today();if(!p.start||!p.end)return 'alerts';if(p.end<t)return'done';if(p.start<=t&&p.end>=t)return'current';const n=dayDiff(t,p.start);if(n>=0&&n<=30)return'upcoming';return'future'}
-function process(rows){state.people=[];state.periods=[];rows.forEach((r,i)=>{const person={id:i,name:norm(get(r,COL.name))||'Sem nome',mat:norm(get(r,COL.mat)),sector:norm(get(r,COL.sector))||'Não informado',role:norm(get(r,COL.role)),email:norm(get(r,COL.email)),manager:norm(get(r,COL.manager)),type:norm(get(r,COL.type)),qty:norm(get(r,COL.qty)),sell:yes(get(r,COL.sell)),thirteen:yes(get(r,COL.thirteen)),periods:[]};person.decision=loadDecision(person);for(let n=1;n<=3;n++){const start=parseDate(get(r,`${n}º Período - Data de Início:`));const end=parseDate(get(r,`${n}º Período - Data de Término:`));if(start||end){const p={id:`${i}-${n}`,person,index:n,start,end,days:inclusive(start,end),issues:[]};if(!start||!end)p.issues.push('Data incompleta');if(start&&end&&end<start)p.issues.push('Término anterior ao início');person.periods.push(p);state.periods.push(p)}}state.people.push(person)});detectConflicts();fillFilters();renderAll();}
+function process(rows){
+  state.people=[];
+  state.periods=[];
+  rows.forEach((r,i)=>{
+    const person={
+      id:i,
+      name:norm(get(r,COL.name))||'Sem nome',
+      mat:norm(get(r,COL.mat)),
+      sector:norm(get(r,COL.sector))||'Não informado',
+      role:norm(get(r,COL.role)),
+      email:norm(get(r,COL.email)),
+      manager:norm(get(r,COL.manager)),
+      type:norm(get(r,COL.type)),
+      qty:norm(get(r,COL.qty)),
+      sell:yes(get(r,COL.sell)),
+      thirteen:yes(get(r,COL.thirteen)),
+      periods:[]
+    };
+
+    person.original={
+      sell:person.sell,
+      thirteen:person.thirteen,
+      periods:[]
+    };
+
+    person.decision=loadDecision(person);
+
+    for(let n=1;n<=3;n++){
+      const start=parseDate(get(r,`${n}º Período - Data de Início:`));
+      const end=parseDate(get(r,`${n}º Período - Data de Término:`));
+      person.original.periods.push({
+        index:n,
+        start:start?start.toISOString().slice(0,10):'',
+        end:end?end.toISOString().slice(0,10):''
+      });
+    }
+
+    if(person.decision.edits){
+      person.sell=!!person.decision.edits.sell;
+      person.thirteen=!!person.decision.edits.thirteen;
+    }
+
+    const sourcePeriods=person.decision.edits?.periods||person.original.periods;
+
+    sourcePeriods.forEach(item=>{
+      const start=parseDate(item.start);
+      const end=parseDate(item.end);
+      if(start||end){
+        const p={
+          id:`${i}-${item.index}`,
+          person,
+          index:item.index,
+          start,
+          end,
+          days:inclusive(start,end),
+          issues:[]
+        };
+        if(!start||!end)p.issues.push('Data incompleta');
+        if(start&&end&&end<start)p.issues.push('Término anterior ao início');
+        person.periods.push(p);
+        state.periods.push(p);
+      }
+    });
+
+    state.people.push(person);
+  });
+
+  detectConflicts();
+  fillFilters();
+  renderAll();
+}
 function detectConflicts(){for(const p of state.periods){if(!p.start||!p.end)continue;for(const q of state.periods){if(p===q||p.person.sector.toLowerCase()!==q.person.sector.toLowerCase()||!q.start||!q.end)continue;if(p.start<=q.end&&q.start<=p.end&&!p.issues.includes('Sobreposição no setor'))p.issues.push('Sobreposição no setor')}}}
 function fillFilters(){const sectors=[...new Set(state.people.map(p=>p.sector))].sort();sector.innerHTML='<option value="">Todos</option>'+sectors.map(x=>`<option>${esc(x)}</option>`).join('');const years=[...new Set(state.periods.flatMap(p=>[p.start?.getFullYear(),p.end?.getFullYear()]).filter(Boolean))].sort();year.innerHTML='<option value="">Todos</option>'+years.map(x=>`<option>${x}</option>`).join('');month.innerHTML='<option value="">Todos</option>'+MONTH_NAMES.map((x,i)=>`<option value="${i}">${x}</option>`).join('')}
 function filterPeriods(){const query=norm(q.value).toLowerCase(),sec=sector.value,yr=year.value,mo=month.value,ap=approval.value,ben=benefit.value;return state.periods.filter(p=>{const c=classify(p);if(state.tab!=='all'&&state.tab!=='alerts'&&c!==state.tab)return false;if(state.tab==='alerts'&&p.issues.length===0)return false;const person=p.person;const hay=[person.name,person.sector,person.role,person.manager,person.email].join(' ').toLowerCase();if(query&&!hay.includes(query))return false;if(sec&&person.sector!==sec)return false;if(yr&&!([p.start?.getFullYear(),p.end?.getFullYear()].includes(+yr)))return false;if(mo!==''&&!(p.start&&p.end&&(+mo>=p.start.getMonth()&&+mo<=p.end.getMonth() || p.start.getFullYear()!==p.end.getFullYear()&&(+mo>=p.start.getMonth()||+mo<=p.end.getMonth()))))return false;if(ap&&person.decision.status!==ap)return false;if(ben==='sell'&&!person.sell)return false;if(ben==='thirteen'&&!person.thirteen)return false;return true}).sort((a,b)=>(a.start||new Date(2999,0,1))-(b.start||new Date(2999,0,1)))}
@@ -402,14 +572,165 @@ function renderMonths(){
 function renderMetrics(){const classes=state.periods.map(classify);mPeople.textContent=state.people.length;mPeriods.textContent=state.periods.length;mCurrent.textContent=classes.filter(x=>x==='current').length;mUpcoming.textContent=classes.filter(x=>x==='upcoming').length;mFuture.textContent=classes.filter(x=>x==='future').length;mDone.textContent=classes.filter(x=>x==='done').length;mAlerts.textContent=state.periods.filter(p=>p.issues.length).length}
 function renderList(){const arr=filterPeriods();count.textContent=`${arr.length} resultado${arr.length===1?'':'s'}`;title.textContent=TAB_ITEMS.find(x=>x[0]===state.tab)?.[1]||'Períodos';if(!arr.length){list.innerHTML='<div class="empty">Nenhum período encontrado com os filtros selecionados.</div>';return}list.innerHTML=arr.map(card).join('')}
 function card(p){const c=classify(p),t=today(),until=p.start?dayDiff(t,p.start):null;const chips=[];if(c==='upcoming')chips.push(`<span class="chip warn">Faltam ${until} dias</span>`);if(c==='current')chips.push('<span class="chip green">Em férias</span>');if(c==='done')chips.push('<span class="chip">Concluído</span>');if(p.person.sell)chips.push('<span class="chip purple">Venda 10 dias</span>');if(p.person.thirteen)chips.push('<span class="chip blue">13º</span>');if(p.issues.length)chips.push(`<span class="chip red">${p.issues.length} alerta${p.issues.length>1?'s':''}</span>`);if(p.person.decision.status!=='Pendente')chips.push(`<span class="chip">${esc(p.person.decision.status)}</span>`);return `<article class="person ${c} ${p.issues.length?'warning':''}" onclick="openDrawer('${p.id}')"><div><div class="name">${esc(p.person.name)}</div><div class="sub">${esc(p.person.sector)}${p.person.role?' · '+esc(p.person.role):''}</div></div><div><div class="period-main">${fmt(p.start)} → ${fmt(p.end)}</div><div class="period-sub">${p.index}º período · ${p.days||0} dia(s)</div></div><div class="chips">${chips.join('')}</div></article>`}
-function openDrawer(id){const p=state.periods.find(x=>x.id===id);if(!p)return;state.selected=p;dName.textContent=p.person.name;dSub.textContent=[p.person.sector,p.person.role].filter(Boolean).join(' · ');dBody.innerHTML=`<div class="detail-grid"><div class="detail"><small>Matrícula</small><b>${esc(p.person.mat||'Não informada')}</b></div><div class="detail"><small>Gestor</small><b>${esc(p.person.manager||'Não informado')}</b></div><div class="detail"><small>E-mail</small><b>${esc(p.person.email||'Não informado')}</b></div><div class="detail"><small>Solicitação</small><b>${esc(p.person.type||'Não informada')}</b></div></div><label>Períodos informados</label>${p.person.periods.map(x=>`<div class="period-card"><h4>${x.index}º período</h4><b>${fmt(x.start)} → ${fmt(x.end)}</b><div class="sub">${x.days||0} dia(s)${x.issues.length?' · ⚠ '+esc(x.issues.join(', ')):''}</div></div>`).join('')}<div class="detail-grid"><div class="detail"><small>Venda de 10 dias</small><b>${p.person.sell?'Sim':'Não'}</b></div><div class="detail"><small>Adiantamento do 13º</small><b>${p.person.thirteen?'Sim':'Não'}</b></div></div><label>Status do RH</label><select id="dStatus"><option>Pendente</option><option>Aprovado</option><option>Ajustar</option><option>Indeferido</option></select><label>Observações</label><textarea id="dNote" placeholder="Registre orientações ou ajustes necessários..."></textarea><button class="btn save" onclick="saveDecision()">Salvar tratamento</button>`;dStatus.value=p.person.decision.status;dNote.value=p.person.decision.note||'';drawer.classList.add('open');back.classList.add('open')}
+function dateInputValue(d){
+  return d?d.toISOString().slice(0,10):'';
+}
+
+function openDrawer(id){
+  const p=state.periods.find(x=>x.id===id);
+  if(!p)return;
+
+  state.selected=p;
+  const person=p.person;
+  dName.textContent=person.name;
+  dSub.textContent=[person.sector,person.role].filter(Boolean).join(' · ');
+
+  const periodInputs=[1,2,3].map(index=>{
+    const item=person.periods.find(x=>x.index===index);
+    return `<div class="edit-period">
+      <div class="edit-period-title">${index}º período</div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Data de início</label>
+          <input type="date" id="editStart${index}" value="${item?dateInputValue(item.start):''}">
+        </div>
+        <div class="edit-field">
+          <label>Data de término</label>
+          <input type="date" id="editEnd${index}" value="${item?dateInputValue(item.end):''}">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const history=(person.decision.history||[]).slice().reverse();
+  const historyHtml=history.length
+    ? history.map(h=>`<div class="history-item"><b>${esc(h.date)}</b><br>${esc(h.description)}</div>`).join('')
+    : '<div class="history-item">Nenhuma alteração registrada.</div>';
+
+  dBody.innerHTML=`
+    <div class="detail-grid">
+      <div class="detail"><small>Matrícula</small><b>${esc(person.mat||'Não informada')}</b></div>
+      <div class="detail"><small>Gestor</small><b>${esc(person.manager||'Não informado')}</b></div>
+      <div class="detail"><small>E-mail</small><b>${esc(person.email||'Não informado')}</b></div>
+      <div class="detail"><small>Solicitação</small><b>${esc(person.type||'Não informada')}</b></div>
+    </div>
+
+    <label>Status do RH</label>
+    <select id="dStatus">
+      <option>Pendente</option>
+      <option>Aprovado</option>
+      <option>Ajustar</option>
+      <option>Indeferido</option>
+    </select>
+
+    <label>Observações</label>
+    <textarea id="dNote" placeholder="Registre orientações ou ajustes necessários..."></textarea>
+
+    <div class="edit-section">
+      <h4>Alterar solicitação</h4>
+      ${periodInputs}
+
+      <div class="check-row">
+        <label><input type="checkbox" id="editSell" ${person.sell?'checked':''}> Venda de 10 dias</label>
+        <label><input type="checkbox" id="editThirteen" ${person.thirteen?'checked':''}> Adiantamento do 13º</label>
+      </div>
+
+      <label>Motivo da alteração</label>
+      <textarea id="editReason" placeholder="Ex.: solicitação do servidor, ajuste de datas, conflito no setor..."></textarea>
+
+      <div class="edit-actions">
+        <button class="btn primary" onclick="saveRequestChanges()">Salvar alterações</button>
+        <button class="btn danger-soft" onclick="restoreOriginalRequest()">Restaurar original</button>
+      </div>
+
+      <div class="history-box">
+        <h5>Histórico de alterações</h5>
+        ${historyHtml}
+      </div>
+    </div>
+
+    <button class="btn save" onclick="saveDecision()">Salvar tratamento do RH</button>
+  `;
+
+  dStatus.value=person.decision.status||'Pendente';
+  dNote.value=person.decision.note||'';
+  drawer.classList.add('open');
+  back.classList.add('open');
+}
+
 function saveDecision(){const p=state.selected;if(!p)return;p.person.decision={status:dStatus.value,note:dNote.value};localStorage.setItem(decisionKey(p.person),JSON.stringify(p.person.decision));closeDrawer();renderAll()}
+
+function saveRequestChanges(){
+  const selected=state.selected;
+  if(!selected)return;
+
+  const person=selected.person;
+  const periods=[1,2,3].map(index=>({
+    index,
+    start:document.getElementById(`editStart${index}`).value,
+    end:document.getElementById(`editEnd${index}`).value
+  }));
+
+  for(const item of periods){
+    if((item.start&&!item.end)||(!item.start&&item.end)){
+      alert(`Preencha as duas datas do ${item.index}º período ou deixe ambas vazias.`);
+      return;
+    }
+    if(item.start&&item.end&&new Date(item.end)<new Date(item.start)){
+      alert(`No ${item.index}º período, a data final não pode ser anterior à data inicial.`);
+      return;
+    }
+  }
+
+  const reason=norm(document.getElementById('editReason').value)||'Alteração realizada no sistema';
+  const now=new Date().toLocaleString('pt-BR');
+
+  person.decision.edits={
+    periods,
+    sell:document.getElementById('editSell').checked,
+    thirteen:document.getElementById('editThirteen').checked
+  };
+
+  person.decision.history=person.decision.history||[];
+  person.decision.history.push({
+    date:now,
+    description:reason
+  });
+
+  localStorage.setItem(decisionKey(person),JSON.stringify(person.decision));
+
+  const rowsBackup=window.__lastRows;
+  closeDrawer();
+  if(rowsBackup)process(rowsBackup);
+}
+
+function restoreOriginalRequest(){
+  const selected=state.selected;
+  if(!selected)return;
+
+  if(!confirm('Deseja restaurar as datas e benefícios originais importados da planilha?'))return;
+
+  const person=selected.person;
+  person.decision.edits=null;
+  person.decision.history=person.decision.history||[];
+  person.decision.history.push({
+    date:new Date().toLocaleString('pt-BR'),
+    description:'Solicitação restaurada para os dados originais da planilha'
+  });
+
+  localStorage.setItem(decisionKey(person),JSON.stringify(person.decision));
+
+  const rowsBackup=window.__lastRows;
+  closeDrawer();
+  if(rowsBackup)process(rowsBackup);
+}
+
 function closeDrawer(){drawer.classList.remove('open');back.classList.remove('open')}
 function setTab(k){state.tab=k;renderAll()}
 function pickMonth(i){month.value=String(i);renderAll()}
 function clearFilters(){q.value='';sector.value='';year.value='';month.value='';approval.value='';benefit.value='';state.tab='all';renderAll()}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-async function loadArrayBuffer(buf,source){try{const wb=XLSX.read(buf,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});process(rows);status.textContent=`Planilha carregada: ${source} · ${rows.length} resposta(s)`;status.className='statusbar';notice.style.display='none'}catch(e){status.textContent='Não foi possível processar a planilha: '+e.message;status.className='statusbar error'}}
+async function loadArrayBuffer(buf,source){try{const wb=XLSX.read(buf,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});window.__lastRows=rows;process(rows);status.textContent=`Planilha carregada: ${source} · ${rows.length} resposta(s)`;status.className='statusbar';notice.style.display='none'}catch(e){status.textContent='Não foi possível processar a planilha: '+e.message;status.className='statusbar error'}}
 async function autoLoad(){
   status.textContent='Carregando a planilha automática...';
   status.className='statusbar';
