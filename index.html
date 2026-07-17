@@ -449,7 +449,7 @@ function loadDecision(p){
   }catch{
     return {status:'Pendente',note:'',edits:null,history:[]}
   }
-}}
+}
 function classify(p){const t=today();if(!p.start||!p.end)return 'alerts';if(p.end<t)return'done';if(p.start<=t&&p.end>=t)return'current';const n=dayDiff(t,p.start);if(n>=0&&n<=30)return'upcoming';return'future'}
 function process(rows){
   state.people=[];
@@ -658,7 +658,20 @@ function openDrawer(id){
   back.classList.add('open');
 }
 
-function saveDecision(){const p=state.selected;if(!p)return;p.person.decision={status:dStatus.value,note:dNote.value};localStorage.setItem(decisionKey(p.person),JSON.stringify(p.person.decision));closeDrawer();renderAll()}
+function saveDecision(){
+  const p=state.selected;
+  if(!p)return;
+  p.person.decision={
+    ...p.person.decision,
+    status:dStatus.value,
+    note:dNote.value,
+    edits:p.person.decision.edits||null,
+    history:p.person.decision.history||[]
+  };
+  localStorage.setItem(decisionKey(p.person),JSON.stringify(p.person.decision));
+  closeDrawer();
+  renderAll();
+}
 
 function saveRequestChanges(){
   const selected=state.selected;
