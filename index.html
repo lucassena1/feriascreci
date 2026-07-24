@@ -152,23 +152,31 @@ button,input,select,textarea{font:inherit}
 }
 
 .months{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:14px;
-  margin:16px 0 22px
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    padding-bottom:8px;
+    margin:16px 0 22px;
+    scroll-behavior:smooth;
 }
+.months::-webkit-scrollbar{height:8px}
+.months::-webkit-scrollbar-thumb{background:#c8d2e2;border-radius:20px}
 .month{
-  border:1px solid var(--line);
-  background:#fff;
-  padding:14px;
-  border-radius:16px;
-  font-size:11px;font-weight:800;
-  cursor:pointer;color:#596579;
-  text-align:left;
-  min-height:220px;
-  display:flex;flex-direction:column;
-  transition:.16s;
-  box-shadow:0 6px 18px rgba(24,43,77,.05)
+    flex:0 0 210px;
+    border:1px solid var(--line);
+    background:#fff;
+    padding:10px;
+    border-radius:14px;
+    font-size:11px;
+    font-weight:800;
+    cursor:pointer;
+    color:#596579;
+    text-align:left;
+    min-height:145px;
+    display:flex;
+    flex-direction:column;
+    transition:.16s;
+    box-shadow:0 5px 14px rgba(24,43,77,.05)
 }
 .month:hover{
   border-color:#b7c8e6;
@@ -183,28 +191,28 @@ button,input,select,textarea{font:inherit}
 }
 .month-head{
   display:flex;align-items:center;justify-content:space-between;
-  gap:10px;padding-bottom:11px;border-bottom:1px solid var(--line)
+  gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)
 }
-.month-title{font-size:17px;font-weight:950;letter-spacing:-.01em;color:#22416f}
+.month-title{font-size:15px;font-weight:950;letter-spacing:-.01em;color:#22416f}
 .month.active .month-title{color:var(--primary)}
 .month-count{
-  min-width:34px;height:28px;padding:0 10px;border-radius:999px;
+  min-width:28px;height:24px;padding:0 10px;border-radius:999px;
   background:#edf2f8;color:#526078;
   display:inline-flex;align-items:center;justify-content:center;
   font-size:12px
 }
 .month.active .month-count{background:#dce7ff;color:var(--primary)}
 .month-summary{
-  padding-top:11px;display:flex;flex-direction:column;gap:8px;
+  padding-top:8px;display:flex;flex-direction:column;gap:5px;
   overflow:hidden;flex:1
 }
 .month-person{
   position:relative;
-  padding:8px 10px 8px 24px;
+  padding:5px 8px 5px 18px;
   border:1px solid #edf0f5;
   border-radius:10px;
   background:#fafcff;
-  font-size:12px;font-weight:800;color:#344258;
+  font-size:11px;font-weight:800;color:#344258;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis
 }
 .month-person:before{
@@ -613,7 +621,7 @@ function renderMonths(){
 
 function monthCard(monthData,i,isCurrentMonth){
   const people=[...monthData.people.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-  const visible=people.slice(0,6);
+  const visible=people.slice(0,4);
   const hidden=Math.max(0,people.length-visible.length);
   return `<button class="month ${month.value==i?'active':''} ${isCurrentMonth?'current-calendar-month':''}" onclick="pickMonth(${i})">
     <span class="month-head">
