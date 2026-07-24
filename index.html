@@ -153,22 +153,22 @@ button,input,select,textarea{font:inherit}
 
 .months{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:10px;
-  margin-bottom:16px
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:16px 0 22px
 }
 .month{
   border:1px solid var(--line);
   background:#fff;
-  padding:11px 12px 10px;
-  border-radius:12px;
-  font-size:10px;font-weight:800;
+  padding:14px;
+  border-radius:16px;
+  font-size:11px;font-weight:800;
   cursor:pointer;color:#596579;
   text-align:left;
-  min-height:155px;
+  min-height:220px;
   display:flex;flex-direction:column;
   transition:.16s;
-  box-shadow:0 3px 12px rgba(24,43,77,.035)
+  box-shadow:0 6px 18px rgba(24,43,77,.05)
 }
 .month:hover{
   border-color:#b7c8e6;
@@ -183,30 +183,33 @@ button,input,select,textarea{font:inherit}
 }
 .month-head{
   display:flex;align-items:center;justify-content:space-between;
-  gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line)
+  gap:10px;padding-bottom:11px;border-bottom:1px solid var(--line)
 }
-.month-title{font-size:15px;font-weight:950;letter-spacing:-.01em;color:#22416f}
+.month-title{font-size:17px;font-weight:950;letter-spacing:-.01em;color:#22416f}
 .month.active .month-title{color:var(--primary)}
 .month-count{
-  min-width:28px;height:24px;padding:0 8px;border-radius:999px;
+  min-width:34px;height:28px;padding:0 10px;border-radius:999px;
   background:#edf2f8;color:#526078;
   display:inline-flex;align-items:center;justify-content:center;
-  font-size:11px
+  font-size:12px
 }
 .month.active .month-count{background:#dce7ff;color:var(--primary)}
 .month-summary{
-  padding-top:8px;display:flex;flex-direction:column;gap:6px;
+  padding-top:11px;display:flex;flex-direction:column;gap:8px;
   overflow:hidden;flex:1
 }
 .month-person{
   position:relative;
-  padding-left:13px;
-  font-size:11px;font-weight:750;color:#44516a;
+  padding:8px 10px 8px 24px;
+  border:1px solid #edf0f5;
+  border-radius:10px;
+  background:#fafcff;
+  font-size:12px;font-weight:800;color:#344258;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis
 }
 .month-person:before{
-  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
-  width:6px;height:6px;border-radius:50%;background:var(--blue)
+  content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:7px;height:7px;border-radius:50%;background:var(--blue)
 }
 .month-person.current:before{background:var(--green)}
 .month-person.upcoming:before{background:var(--orange)}
@@ -214,10 +217,19 @@ button,input,select,textarea{font:inherit}
 .month-person.done:before{background:var(--purple)}
 .month-person.alerts:before{background:var(--red)}
 .month-more{
-  margin-top:auto;padding-top:4px;
-  font-size:10px;color:var(--primary);font-weight:900
+  margin-top:auto;padding:8px 10px 0;
+  font-size:11px;color:var(--primary);font-weight:900
 }
-.month-empty{font-size:10px;font-weight:650;color:#9aa4b4;font-style:italic}
+.month-empty{
+  font-size:11px;font-weight:700;color:#9aa4b4;font-style:italic;
+  padding:18px 4px;text-align:center
+}
+.month-foot{
+  display:flex;justify-content:space-between;gap:8px;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+  font-size:10px;color:var(--muted)
+}
+.month-foot b{color:var(--text)}
 
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 2px}
 .section-head h2{font-size:17px;margin:0}
@@ -271,7 +283,7 @@ button,input,select,textarea{font:inherit}
 @media(max-width:1180px){
   .metrics{grid-template-columns:repeat(4,1fr)}
   .filters{grid-template-columns:repeat(3,1fr)}
-  .months{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .months{grid-template-columns:repeat(2,minmax(0,1fr))}
   .list{grid-template-columns:1fr}
 }
 @media(max-width:760px){
@@ -283,15 +295,14 @@ button,input,select,textarea{font:inherit}
   .metric{padding-left:48px}
   .filters{grid-template-columns:1fr 1fr}
   .filters .search{grid-column:1/-1}
-  .months{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .month{min-height:145px}
+  .months{grid-template-columns:1fr}
+  .month{min-height:190px}
   .person{grid-template-columns:1fr}
   .chips{justify-content:flex-start}
   .detail-grid{grid-template-columns:1fr}
   .header p{display:none}
 }
 @media(max-width:460px){
-  .months{grid-template-columns:1fr}
   .actions .btn.primary{display:none}
 }
 @media print{
@@ -532,7 +543,7 @@ function shortName(fullName){
   if(!clean||clean.includes('@'))return 'Nome não informado';
   const parts=clean.split(/\s+/).filter(Boolean);
   if(parts.length<=1)return parts[0]||'Nome não informado';
-  return `${parts[0]} ${parts[parts.length-1]}`;
+  return `${parts[0]} ${parts[1]}`;
 }
 function periodTouchesMonth(p,m){if(!p.start||!p.end)return false;const selectedYear=year.value?Number(year.value):null;const startYear=p.start.getFullYear(),endYear=p.end.getFullYear();if(selectedYear){const first=new Date(selectedYear,m,1),last=new Date(selectedYear,m+1,0,23,59,59,999);return p.start<=last&&p.end>=first}if(startYear===endYear)return p.start.getMonth()<=m&&p.end.getMonth()>=m;return m>=p.start.getMonth()||m<=p.end.getMonth()}
 function renderMonths(){
@@ -552,26 +563,32 @@ function renderMonths(){
   document.getElementById('months').innerHTML=MONTH_NAMES.map((m,i)=>{
     const people=[...data[i].people.values()]
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-    const visible=people.slice(0,5);
+    const visible=people.slice(0,6);
     const hidden=Math.max(0,people.length-visible.length);
+    const statuses=people.reduce((acc,item)=>{acc[item.status]=(acc[item.status]||0)+1;return acc},{})
 
     return `<button class="month ${month.value==i?'active':''}" onclick="pickMonth(${i})">
       <span class="month-head">
         <span class="month-title">${m}</span>
-        <span class="month-count">${data[i].count}</span>
+        <span class="month-count">${people.length}</span>
       </span>
       <span class="month-summary">
         ${visible.length
           ? visible.map(person=>`<span class="month-person ${person.status}">${esc(person.name)}</span>`).join('')
           : '<span class="month-empty">Nenhuma solicitação</span>'}
-        ${hidden?`<span class="month-more">+${hidden} outro${hidden>1?'s':''}</span>`:''}
+        ${hidden?`<span class="month-more">Ver mais ${hidden} servidor${hidden>1?'es':''}</span>`:''}
+      </span>
+      <span class="month-foot">
+        <span>Em férias: <b>${statuses.current||0}</b></span>
+        <span>Próximas: <b>${statuses.upcoming||0}</b></span>
+        <span>Concluídas: <b>${statuses.done||0}</b></span>
       </span>
     </button>`;
   }).join('');
 }
 function renderMetrics(){const classes=state.periods.map(classify);mPeople.textContent=state.people.length;mPeriods.textContent=state.periods.length;mCurrent.textContent=classes.filter(x=>x==='current').length;mUpcoming.textContent=classes.filter(x=>x==='upcoming').length;mFuture.textContent=classes.filter(x=>x==='future').length;mDone.textContent=classes.filter(x=>x==='done').length;mAlerts.textContent=state.periods.filter(p=>p.issues.length).length}
 function renderList(){const arr=filterPeriods();count.textContent=`${arr.length} resultado${arr.length===1?'':'s'}`;title.textContent=TAB_ITEMS.find(x=>x[0]===state.tab)?.[1]||'Períodos';if(!arr.length){list.innerHTML='<div class="empty">Nenhum período encontrado com os filtros selecionados.</div>';return}list.innerHTML=arr.map(card).join('')}
-function card(p){const c=classify(p),t=today(),until=p.start?dayDiff(t,p.start):null;const chips=[];if(c==='upcoming')chips.push(`<span class="chip warn">Faltam ${until} dias</span>`);if(c==='current')chips.push('<span class="chip green">Em férias</span>');if(c==='done')chips.push('<span class="chip">Concluído</span>');if(p.person.sell)chips.push('<span class="chip purple">Venda 10 dias</span>');if(p.person.thirteen)chips.push('<span class="chip blue">13º</span>');if(p.issues.length)chips.push(`<span class="chip red">${p.issues.length} alerta${p.issues.length>1?'s':''}</span>`);if(p.person.decision.status!=='Pendente')chips.push(`<span class="chip">${esc(p.person.decision.status)}</span>`);return `<article class="person ${c} ${p.issues.length?'warning':''}" onclick="openDrawer('${p.id}')"><div><div class="name">${esc(p.person.name)}</div><div class="sub">${esc(p.person.sector)}${p.person.role?' · '+esc(p.person.role):''}</div></div><div><div class="period-main">${fmt(p.start)} → ${fmt(p.end)}</div><div class="period-sub">${p.index}º período · ${p.days||0} dia(s)</div></div><div class="chips">${chips.join('')}</div></article>`}
+function card(p){const c=classify(p),t=today(),until=p.start?dayDiff(t,p.start):null;const chips=[];if(c==='upcoming')chips.push(`<span class="chip warn">Faltam ${until} dias</span>`);if(c==='current')chips.push('<span class="chip green">Em férias</span>');if(c==='done')chips.push('<span class="chip">Concluído</span>');if(p.person.sell)chips.push('<span class="chip purple">Venda 10 dias</span>');if(p.person.thirteen)chips.push('<span class="chip blue">13º</span>');if(p.issues.length)chips.push(`<span class="chip red">${p.issues.length} alerta${p.issues.length>1?'s':''}</span>`);if(p.person.decision.status!=='Pendente')chips.push(`<span class="chip">${esc(p.person.decision.status)}</span>`);return `<article class="person ${c} ${p.issues.length?'warning':''}" onclick="openDrawer('${p.id}')"><div><div class="name">${esc(shortName(p.person.name))}</div><div class="sub">${esc(p.person.sector)}${p.person.role?' · '+esc(p.person.role):''}</div></div><div><div class="period-main">${fmt(p.start)} → ${fmt(p.end)}</div><div class="period-sub">${p.index}º período · ${p.days||0} dia(s)</div></div><div class="chips">${chips.join('')}</div></article>`}
 function dateInputValue(d){
   return d?d.toISOString().slice(0,10):'';
 }
@@ -582,7 +599,7 @@ function openDrawer(id){
 
   state.selected=p;
   const person=p.person;
-  dName.textContent=person.name;
+  dName.textContent=shortName(person.name);
   dSub.textContent=[person.sector,person.role].filter(Boolean).join(' · ');
 
   const periodInputs=[1,2,3].map(index=>{
