@@ -280,6 +280,21 @@ button,input,select,textarea{font:inherit}
 .save{margin-top:10px;width:100%;background:var(--primary);color:white}
 .notice{display:none;background:#fff6d9;border:1px solid #efd083;color:#715000;border-radius:10px;padding:9px 12px;font-size:12px;margin-bottom:10px}
 
+
+.months-section{margin-top:12px}
+.months-section-head,.history-head{margin:14px 2px 10px}
+.months-section-head>div,.history-head>div{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.months-section-head p,.history-head p{margin:0;font-size:11px;color:var(--muted)}
+.history-section{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.past-months .month{min-height:118px;background:#f8f9fc;border-color:#e3e7ee;box-shadow:none;opacity:.88}
+.past-months .month:hover{opacity:1;background:#fff}
+.past-months .month-title{color:#667085}
+.past-months .month-count{background:#e9edf3;color:#667085}
+.past-months .month-person:before{background:#98a2b3!important}
+.past-months .month-more{color:#667085}
+.month.current-calendar-month{border:2px solid var(--primary);background:linear-gradient(180deg,#f4f8ff,#edf4ff)}
+.month.current-calendar-month .month-title:after{content:"Atual";margin-left:7px;padding:3px 6px;border-radius:999px;background:var(--primary);color:#fff;font-size:8px;vertical-align:2px;letter-spacing:.03em}
+
 @media(max-width:1180px){
   .metrics{grid-template-columns:repeat(4,1fr)}
   .filters{grid-template-columns:repeat(3,1fr)}
@@ -429,9 +444,22 @@ button,input,select,textarea{font:inherit}
 <button class="btn outline" onclick="clearFilters()">Limpar</button>
 </section>
 <div class="tabs" id="tabs"></div>
-<div class="months" id="months"></div>
+<section class="months-section current-months-section">
+  <div class="section-head months-section-head">
+    <div><h2>Calendário de férias</h2><p>Mês atual e próximos meses</p></div>
+    <span id="activeMonthCount">0 meses</span>
+  </div>
+  <div class="months" id="months"></div>
+</section>
 <div class="section-head"><h2 id="title">Todos os períodos</h2><span id="count">0 resultados</span></div>
 <section class="list" id="list"></section>
+<section class="history-section" id="historySection">
+  <div class="section-head history-head">
+    <div><h2>Histórico de meses encerrados</h2><p>Meses anteriores ao mês atual</p></div>
+    <span id="pastMonthCount">0 meses</span>
+  </div>
+  <div class="months past-months" id="pastMonths"></div>
+</section>
 </main>
 <div class="drawer-back" id="back" onclick="closeDrawer()"></div><aside class="drawer" id="drawer"><div class="drawer-head"><div><h3 id="dName"></h3><div class="sub" id="dSub"></div></div><button class="close" onclick="closeDrawer()">✕</button></div><div class="drawer-body" id="dBody"></div></aside>
 <script>
@@ -534,7 +562,7 @@ function process(rows){
   renderAll();
 }
 function detectConflicts(){for(const p of state.periods){if(!p.start||!p.end)continue;for(const q of state.periods){if(p===q||p.person.sector.toLowerCase()!==q.person.sector.toLowerCase()||!q.start||!q.end)continue;if(p.start<=q.end&&q.start<=p.end&&!p.issues.includes('Sobreposição no setor'))p.issues.push('Sobreposição no setor')}}}
-function fillFilters(){const sectors=[...new Set(state.people.map(p=>p.sector))].sort();sector.innerHTML='<option value="">Todos</option>'+sectors.map(x=>`<option>${esc(x)}</option>`).join('');const years=[...new Set(state.periods.flatMap(p=>[p.start?.getFullYear(),p.end?.getFullYear()]).filter(Boolean))].sort();year.innerHTML='<option value="">Todos</option>'+years.map(x=>`<option>${x}</option>`).join('');month.innerHTML='<option value="">Todos</option>'+MONTH_NAMES.map((x,i)=>`<option value="${i}">${x}</option>`).join('')}
+function fillFilters(){const currentSector=sector.value,currentYear=year.value,currentMonth=month.value;const sectors=[...new Set(state.people.map(p=>p.sector))].sort();sector.innerHTML='<option value="">Todos</option>'+sectors.map(x=>`<option>${esc(x)}</option>`).join('');const years=[...new Set(state.periods.flatMap(p=>[p.start?.getFullYear(),p.end?.getFullYear()]).filter(Boolean))].sort();year.innerHTML='<option value="">Todos</option>'+years.map(x=>`<option>${x}</option>`).join('');month.innerHTML='<option value="">Todos</option>'+MONTH_NAMES.map((x,i)=>`<option value="${i}">${x}</option>`).join('');sector.value=currentSector;month.value=currentMonth;if(currentYear)year.value=currentYear;else if(years.includes(today().getFullYear()))year.value=String(today().getFullYear())}
 function filterPeriods(){const query=norm(q.value).toLowerCase(),sec=sector.value,yr=year.value,mo=month.value,ap=approval.value,ben=benefit.value;return state.periods.filter(p=>{const c=classify(p);if(state.tab!=='all'&&state.tab!=='alerts'&&c!==state.tab)return false;if(state.tab==='alerts'&&p.issues.length===0)return false;const person=p.person;const hay=[person.name,person.sector,person.role,person.manager,person.email].join(' ').toLowerCase();if(query&&!hay.includes(query))return false;if(sec&&person.sector!==sec)return false;if(yr&&!([p.start?.getFullYear(),p.end?.getFullYear()].includes(+yr)))return false;if(mo!==''&&!(p.start&&p.end&&(+mo>=p.start.getMonth()&&+mo<=p.end.getMonth() || p.start.getFullYear()!==p.end.getFullYear()&&(+mo>=p.start.getMonth()||+mo<=p.end.getMonth()))))return false;if(ap&&person.decision.status!==ap)return false;if(ben==='sell'&&!person.sell)return false;if(ben==='thirteen'&&!person.thirteen)return false;return true}).sort((a,b)=>(a.start||new Date(2999,0,1))-(b.start||new Date(2999,0,1)))}
 function renderAll(){renderTabs();renderMonths();renderMetrics();renderList()}
 function renderTabs(){document.getElementById('tabs').innerHTML=TAB_ITEMS.map(([k,l])=>`<button class="tab ${state.tab===k?'active':''}" onclick="setTab('${k}')">${l}</button>`).join('')}
@@ -548,7 +576,13 @@ function shortName(fullName){
 function periodTouchesMonth(p,m){if(!p.start||!p.end)return false;const selectedYear=year.value?Number(year.value):null;const startYear=p.start.getFullYear(),endYear=p.end.getFullYear();if(selectedYear){const first=new Date(selectedYear,m,1),last=new Date(selectedYear,m+1,0,23,59,59,999);return p.start<=last&&p.end>=first}if(startYear===endYear)return p.start.getMonth()<=m&&p.end.getMonth()>=m;return m>=p.start.getMonth()||m<=p.end.getMonth()}
 function renderMonths(){
   const data=Array.from({length:12},()=>({count:0,people:new Map()}));
-  state.periods.forEach(p=>{
+  const filteredBase=state.periods.filter(p=>{
+    const selectedYear=year.value?Number(year.value):null;
+    if(!selectedYear)return true;
+    return p.start?.getFullYear()===selectedYear||p.end?.getFullYear()===selectedYear;
+  });
+
+  filteredBase.forEach(p=>{
     for(let m=0;m<12;m++){
       if(periodTouchesMonth(p,m)){
         data[m].count++;
@@ -560,31 +594,39 @@ function renderMonths(){
     }
   });
 
-  document.getElementById('months').innerHTML=MONTH_NAMES.map((m,i)=>{
-    const people=[...data[i].people.values()]
-      .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-    const visible=people.slice(0,6);
-    const hidden=Math.max(0,people.length-visible.length);
-    const statuses=people.reduce((acc,item)=>{acc[item.status]=(acc[item.status]||0)+1;return acc},{})
+  const now=today();
+  const referenceYear=year.value?Number(year.value):now.getFullYear();
+  const active=[];
+  const past=[];
 
-    return `<button class="month ${month.value==i?'active':''}" onclick="pickMonth(${i})">
-      <span class="month-head">
-        <span class="month-title">${m}</span>
-        <span class="month-count">${people.length}</span>
-      </span>
-      <span class="month-summary">
-        ${visible.length
-          ? visible.map(person=>`<span class="month-person ${person.status}">${esc(person.name)}</span>`).join('')
-          : '<span class="month-empty">Nenhuma solicitação</span>'}
-        ${hidden?`<span class="month-more">Ver mais ${hidden} servidor${hidden>1?'es':''}</span>`:''}
-      </span>
-      <span class="month-foot">
-        <span>Em férias: <b>${statuses.current||0}</b></span>
-        <span>Próximas: <b>${statuses.upcoming||0}</b></span>
-        <span>Concluídas: <b>${statuses.done||0}</b></span>
-      </span>
-    </button>`;
-  }).join('');
+  for(let i=0;i<12;i++){
+    const monthEnd=new Date(referenceYear,i+1,0,23,59,59,999);
+    const item={index:i,html:monthCard(data[i],i,referenceYear===now.getFullYear()&&i===now.getMonth())};
+    if(monthEnd<now)past.push(item);else active.push(item);
+  }
+
+  months.innerHTML=active.map(x=>x.html).join('');
+  pastMonths.innerHTML=past.length?past.map(x=>x.html).join(''):'<div class="empty">Nenhum mês encerrado para o ano selecionado.</div>';
+  activeMonthCount.textContent=`${active.length} ${active.length===1?'mês':'meses'}`;
+  pastMonthCount.textContent=`${past.length} ${past.length===1?'mês':'meses'}`;
+}
+
+function monthCard(monthData,i,isCurrentMonth){
+  const people=[...monthData.people.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const visible=people.slice(0,6);
+  const hidden=Math.max(0,people.length-visible.length);
+  return `<button class="month ${month.value==i?'active':''} ${isCurrentMonth?'current-calendar-month':''}" onclick="pickMonth(${i})">
+    <span class="month-head">
+      <span class="month-title">${MONTH_NAMES[i]}</span>
+      <span class="month-count">${people.length}</span>
+    </span>
+    <span class="month-summary">
+      ${visible.length
+        ? visible.map(person=>`<span class="month-person ${person.status}">${esc(person.name)}</span>`).join('')
+        : '<span class="month-empty">Nenhuma solicitação</span>'}
+      ${hidden?`<span class="month-more">+${hidden} outro${hidden>1?'s':''}</span>`:''}
+    </span>
+  </button>`;
 }
 function renderMetrics(){const classes=state.periods.map(classify);mPeople.textContent=state.people.length;mPeriods.textContent=state.periods.length;mCurrent.textContent=classes.filter(x=>x==='current').length;mUpcoming.textContent=classes.filter(x=>x==='upcoming').length;mFuture.textContent=classes.filter(x=>x==='future').length;mDone.textContent=classes.filter(x=>x==='done').length;mAlerts.textContent=state.periods.filter(p=>p.issues.length).length}
 function renderList(){const arr=filterPeriods();count.textContent=`${arr.length} resultado${arr.length===1?'':'s'}`;title.textContent=TAB_ITEMS.find(x=>x[0]===state.tab)?.[1]||'Períodos';if(!arr.length){list.innerHTML='<div class="empty">Nenhum período encontrado com os filtros selecionados.</div>';return}list.innerHTML=arr.map(card).join('')}
