@@ -478,8 +478,8 @@ const TAB_ITEMS=[['all','Todos'],['upcoming','Próximas'],['current','Em férias
 const MONTH_NAMES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 function norm(s){return String(s??'').trim()}
 function yes(v){return /^sim/i.test(norm(v))}
-function parseDate(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate());if(typeof v==='number'){const d=XLSX.SSF.parse_date_code(v);return d?new Date(d.y,d.m-1,d.d):null}const s=norm(v);const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);if(m)return new Date(+m[3],+m[2]-1,+m[1]);const d=new Date(s);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
-function fmt(d){return d?d.toLocaleDateString('pt-BR'):'—'}
+function parseDate(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate());if(typeof v==='number'){const d=XLSX.SSF.parse_date_code(v);return d?new Date(d.y,d.m-1,d.d):null}const s=norm(v);const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(iso)return new Date(+iso[1],+iso[2]-1,+iso[3]);const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);if(m)return new Date(+m[3],+m[2]-1,+m[1]);const d=new Date(s);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function fmt(d){return d?`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`:'—'}
 function dayDiff(a,b){return Math.round((b-a)/86400000)}
 function inclusive(a,b){return a&&b?dayDiff(a,b)+1:0}
 function today(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
@@ -530,8 +530,8 @@ function process(rows){
       const end=parseDate(get(r,`${n}º Período - Data de Término:`));
       person.original.periods.push({
         index:n,
-        start:start?start.toISOString().slice(0,10):'',
-        end:end?end.toISOString().slice(0,10):''
+        start:start?localDateValue(start):'',
+        end:end?localDateValue(end):''
       });
     }
 
@@ -639,8 +639,12 @@ function monthCard(monthData,i,isCurrentMonth){
 function renderMetrics(){const classes=state.periods.map(classify);mPeople.textContent=state.people.length;mPeriods.textContent=state.periods.length;mCurrent.textContent=classes.filter(x=>x==='current').length;mUpcoming.textContent=classes.filter(x=>x==='upcoming').length;mFuture.textContent=classes.filter(x=>x==='future').length;mDone.textContent=classes.filter(x=>x==='done').length;mAlerts.textContent=state.periods.filter(p=>p.issues.length).length}
 function renderList(){const arr=filterPeriods();count.textContent=`${arr.length} resultado${arr.length===1?'':'s'}`;title.textContent=TAB_ITEMS.find(x=>x[0]===state.tab)?.[1]||'Períodos';if(!arr.length){list.innerHTML='<div class="empty">Nenhum período encontrado com os filtros selecionados.</div>';return}list.innerHTML=arr.map(card).join('')}
 function card(p){const c=classify(p),t=today(),until=p.start?dayDiff(t,p.start):null;const chips=[];if(c==='upcoming')chips.push(`<span class="chip warn">Faltam ${until} dias</span>`);if(c==='current')chips.push('<span class="chip green">Em férias</span>');if(c==='done')chips.push('<span class="chip">Concluído</span>');if(p.person.sell)chips.push('<span class="chip purple">Venda 10 dias</span>');if(p.person.thirteen)chips.push('<span class="chip blue">13º</span>');if(p.issues.length)chips.push(`<span class="chip red">${p.issues.length} alerta${p.issues.length>1?'s':''}</span>`);if(p.person.decision.status!=='Pendente')chips.push(`<span class="chip">${esc(p.person.decision.status)}</span>`);return `<article class="person ${c} ${p.issues.length?'warning':''}" onclick="openDrawer('${p.id}')"><div><div class="name">${esc(shortName(p.person.name))}</div><div class="sub">${esc(p.person.sector)}${p.person.role?' · '+esc(p.person.role):''}</div></div><div><div class="period-main">${fmt(p.start)} → ${fmt(p.end)}</div><div class="period-sub">${p.index}º período · ${p.days||0} dia(s)</div></div><div class="chips">${chips.join('')}</div></article>`}
+function localDateValue(d){
+  if(!d)return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function dateInputValue(d){
-  return d?d.toISOString().slice(0,10):'';
+  return localDateValue(d);
 }
 
 function openDrawer(id){
